@@ -1,0 +1,25 @@
+/* 👇 Add this to the bottom of your global CSS file */
+@media print {
+  /* Hide the main app layout, sidebar, headers, and buttons */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Make ONLY the print-receipt area visible */
+  .print-receipt, .print-receipt * {
+    visibility: visible;
+  }
+
+  /* Move the receipt to the top-left corner of the paper */
+  .print-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* Remove page margins so thermal printers don't waste paper */
+  @page {
+    margin: 0;
+  }
+}

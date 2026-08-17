@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.DS_Store
+*.log
+*.zip
+*.md
+*.txt
+.env
+*.cjs
+postgres_full_backup.sql
+graphify-out
+certificates/private-key.pem
+!certificates/digital-certificate.txt
+qz tray created file
+!docs/qz-tray.md

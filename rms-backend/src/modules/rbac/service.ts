@@ -1,0 +1,83 @@
+import type { UserRole } from "@prisma/client";
+import type { Permission, RolePermissionMap } from "./types.js";
+
+export const rolePermissions: RolePermissionMap = {
+  MASTER: [],
+  ADMIN: [
+    "table:read",
+    "table:write",
+    "menu:read",
+    "menu:write",
+    "stock:read",
+    "stock:write",
+    "order:read",
+    "order:write",
+    "order:void",
+    "kot:read",
+    "kot:write",
+    "bill:read",
+    "bill:write",
+    "payment:read",
+    "payment:write",
+    "refund:read",
+    "refund:write",
+    "customer:read",
+    "customer:write",
+    "shift:read",
+    "shift:write",
+    "tax:read",
+    "tax:write",
+    "report:read",
+    "report:financial:read",
+    "audit:read",
+    "user:manage",
+    "inventory:read",
+    "inventory:write",
+    "kitchen-station:read",
+    "kitchen-station:write",
+    "printer:read",
+    "printer:write"
+  ],
+  CASHIER: [
+    "table:read",
+    "order:read",
+    "order:write",
+    "bill:read",
+    "bill:write",
+    "payment:read",
+    "payment:write",
+    "refund:read",
+    "refund:write",
+    "customer:read",
+    "customer:write",
+    "shift:read",
+    "shift:write",
+    "report:read",
+    "menu:read"
+  ],
+  WAITER: ["table:read", "table:write", "menu:read", "order:read", "order:write", "kot:read", "stock:read", "customer:read", "customer:write"],
+  CASHIER_WAITER: [
+    "table:read",
+    "table:write",
+    "menu:read",
+    "order:read",
+    "order:write",
+    "kot:read",
+    "bill:read",
+    "bill:write",
+    "payment:read",
+    "payment:write",
+    "refund:read",
+    "refund:write",
+    "customer:read",
+    "customer:write",
+    "shift:read",
+    "shift:write",
+    "report:read",
+    "stock:read"
+  ],
+  KITCHEN: ["order:read", "kot:read", "kot:write", "stock:read"]
+};
+
+export const hasPermission = (role: UserRole, permission: Permission) =>
+  role === "MASTER" || rolePermissions[role].includes(permission);

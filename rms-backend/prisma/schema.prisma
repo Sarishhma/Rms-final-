@@ -1,0 +1,1573 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  MASTER
+  ADMIN
+  CASHIER
+  WAITER
+  CASHIER_WAITER
+  KITCHEN
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+}
+
+enum MenuItemType {
+  FOOD
+  BEVERAGE
+  OTHER
+}
+
+enum StockStatus {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+}
+
+enum OrderStatus {
+  CONFIRMED
+  CANCELLED
+  VOIDED
+  COMPLETED
+}
+
+enum OrderItemStatus {
+  PENDING
+  CANCELLED
+  VOIDED
+  PREPARING
+  READY
+  SERVED
+}
+
+enum KotStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+enum BillStatus {
+  OPEN
+  PARTIALLY_PAID
+  PAID
+  VOIDED
+  REFUNDED
+}
+
+enum OrderChannel {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum RefundStatus {
+  COMPLETED
+  VOIDED
+}
+
+enum PaymentMethod {
+  CASH
+  QR
+  CARD
+  MIXED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  VOIDED
+}
+
+enum AuditAction {
+  ORDER_EDITED
+  ORDER_CANCELLED
+  ORDER_VOIDED
+  DISCOUNT_APPLIED
+
+  PAYMENT_CREATED
+  PAYMENT_EDITED
+  PAYMENT_VOIDED
+
+  REFUND_CREATED
+  REFUND_VOIDED
+
+  TABLE_RELEASED
+  TABLE_SWAPPED
+  TABLE_COMBINED
+  TABLE_UNCOMBINED
+  TABLE_SPLIT
+  ORDER_MERGED
+
+  MENU_AVAILABILITY_CHANGED
+
+  SHIFT_OPENED
+  SHIFT_CLOSED
+  CASH_DRAWER_ADJUSTED
+
+  INVENTORY_ITEM_CREATED
+  INVENTORY_ITEM_UPDATED
+  INVENTORY_ITEM_DELETED
+
+  INVENTORY_SUPPLIER_CREATED
+  INVENTORY_SUPPLIER_UPDATED
+  INVENTORY_SUPPLIER_DELETED
+
+  INVENTORY_UNIT_CREATED
+  INVENTORY_UNIT_UPDATED
+  INVENTORY_UNIT_DELETED
+
+  INVENTORY_PURCHASE_CREATED
+  INVENTORY_PURCHASE_UPDATED
+  INVENTORY_PURCHASE_POSTED
+  INVENTORY_PURCHASE_CANCELLED
+
+  STOCK_OUT_CREATED
+  STOCK_OUT_UPDATED
+  STOCK_OUT_POSTED
+  STOCK_OUT_CANCELLED
+
+  INVENTORY_ADJUSTMENT_CREATED
+  INVENTORY_ADJUSTMENT_UPDATED
+  INVENTORY_ADJUSTMENT_POSTED
+  INVENTORY_ADJUSTMENT_CANCELLED
+
+  STOCK_MOVEMENT_CREATED
+  STOCK_ADJUSTED
+}
+
+enum SequenceKind {
+  ORDER
+  KOT
+  BILL
+  SHIFT
+
+  INVENTORY_PURCHASE
+  STOCK_OUT
+  INVENTORY_ADJUSTMENT
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+enum CashDrawerEventType {
+  PAY_IN
+  PAY_OUT
+}
+
+enum InventoryUnitType {
+  WEIGHT
+  VOLUME
+  COUNT
+  PACKAGING
+}
+
+enum InventoryItemType {
+  RAW_MATERIAL
+  PACKAGED_ITEM
+  CONSUMABLE
+  OTHER
+}
+
+enum InventoryCostingMethod {
+  FIFO
+  FEFO
+  WEIGHTED_AVERAGE
+}
+
+enum InventoryPurchaseStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum StockOutStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum StockOutReason {
+  KITCHEN_USE
+  BAR_USE
+  STAFF_MEAL
+  WASTE
+  DAMAGED
+  EXPIRED
+  EVENT_USE
+  COMPLIMENTARY
+  INTERNAL_USE
+  SALES_USE
+  OTHER
+}
+
+enum InventoryAdjustmentStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum StockMovementType {
+  OPENING_BALANCE
+  PURCHASE_IN
+  STOCK_OUT
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+}
+
+enum StockMovementDirection {
+  IN
+  OUT
+}
+
+enum StockReferenceType {
+  OPENING_BALANCE
+  PURCHASE
+  STOCK_OUT
+  INVENTORY_ADJUSTMENT
+  MANUAL
+}
+
+// ─── Tenant Root ──────────────────────────────────────────────────────────────
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Back-relations (all tenant-scoped models)
+  users                    User[]
+  diningTables             DiningTable[]
+  categories               Category[]
+  subcategories            Subcategory[]
+  menuItems                MenuItem[]
+  menuVariants             MenuVariant[]
+  menuAddons               MenuAddon[]
+  dailyStocks              DailyStock[]
+  orders                   Order[]
+  kotTickets               KotTicket[]
+  bills                    Bill[]
+  payments                 Payment[]
+  refunds                  Refund[]
+  customers                Customer[]
+  shifts                   Shift[]
+  cashDrawerEvents         CashDrawerEvent[]
+  auditLogs                AuditLog[]
+  inventoryTransactions    InventoryTransaction[]
+  tableGroups              TableGroup[]
+  tableSplits              TableSplit[]
+  taxConfig                TaxConfig?
+  inventoryUnits           InventoryUnit[]
+  inventoryUnitConversions InventoryUnitConversion[]
+  inventoryItems           InventoryItem[]
+  inventorySuppliers       InventorySupplier[]
+  inventoryPurchases       InventoryPurchase[]
+  stockBatches             StockBatch[]
+  stockBalances            StockBalance[]
+  stockMovements           StockMovement[]
+  stockOuts                StockOut[]
+  inventoryAdjustments     InventoryAdjustment[]
+  inventorySettings        InventorySetting?
+
+  kitchenStations KitchenStation[]
+  printers        Printer[]
+
+  @@index([isActive])
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         UserRole @default(ADMIN)
+  // Nullable only for future platform MASTER users.
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  phoneNumber  String?
+
+  createdOrders             Order[]                @relation("OrderCreatedBy")
+  auditLogs                 AuditLog[]
+  payments                  Payment[]
+  refunds                   Refund[]
+  openedShifts              Shift[]                @relation("ShiftOpenedBy")
+  closedShifts              Shift[]                @relation("ShiftClosedBy")
+  cashDrawerEvents          CashDrawerEvent[]
+  inventoryTransactions     InventoryTransaction[]
+  tableGroups               TableGroup[]           @relation("TableGroupCreatedBy")
+  tableSplits               TableSplit[]
+  refreshTokens             RefreshToken[]
+  createdInventoryUnits     InventoryUnit[]        @relation("InventoryUnitCreatedBy")
+  createdInventoryItems     InventoryItem[]        @relation("InventoryItemCreatedBy")
+  createdInventorySuppliers InventorySupplier[]    @relation("InventorySupplierCreatedBy")
+
+  createdInventoryPurchases   InventoryPurchase[] @relation("InventoryPurchaseCreatedBy")
+  postedInventoryPurchases    InventoryPurchase[] @relation("InventoryPurchasePostedBy")
+  cancelledInventoryPurchases InventoryPurchase[] @relation("InventoryPurchaseCancelledBy")
+
+  createdStockOuts   StockOut[] @relation("StockOutCreatedBy")
+  postedStockOuts    StockOut[] @relation("StockOutPostedBy")
+  cancelledStockOuts StockOut[] @relation("StockOutCancelledBy")
+
+  createdInventoryAdjustments   InventoryAdjustment[] @relation("InventoryAdjustmentCreatedBy")
+  postedInventoryAdjustments    InventoryAdjustment[] @relation("InventoryAdjustmentPostedBy")
+  cancelledInventoryAdjustments InventoryAdjustment[] @relation("InventoryAdjustmentCancelledBy")
+
+  createdStockMovements StockMovement[] @relation("StockMovementCreatedBy")
+
+  kitchenStations KitchenStation[] @relation("StationStaff")
+  printers        Printer[]        @relation("PrinterUser")
+
+  @@index([companyId, role])
+  @@index([role])
+  @@index([isActive])
+}
+
+// ─── Refresh Tokens ───────────────────────────────────────────────────────────
+// Server-side refresh token store. The raw token is never persisted — only its
+// SHA-256 hash. `family` groups tokens from the same login session so that
+// reuse of a rotated-out token can invalidate the entire family (replay guard).
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  family    String   @default(uuid())
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRevoked])
+  @@index([family])
+  @@index([expiresAt])
+}
+
+// ─── Dining Tables ────────────────────────────────────────────────────────────
+
+model DiningTable {
+  id            String      @id @default(uuid())
+  companyId     String      @default("AUTO_INJECTED")
+  company       Company     @relation(fields: [companyId], references: [id])
+  name          String
+  capacity      Int
+  status        TableStatus @default(AVAILABLE)
+  floor         String?
+  activeOrderId String?     @unique
+  activeOrder   Order?      @relation("ActiveTableOrder", fields: [activeOrderId], references: [id])
+  orders        Order[]     @relation("OrderTable")
+  isDeleted     Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  tableGroupMembers TableGroupMember[]
+  splitFromTables   TableSplit[]       @relation("SplitFromTable")
+  splitToTables     TableSplit[]       @relation("SplitToTable")
+
+  @@unique([companyId, name])
+  @@index([companyId, status, isDeleted])
+}
+
+model TableGroup {
+  id           String   @id @default(uuid())
+  companyId    String   @default("AUTO_INJECTED")
+  company      Company  @relation(fields: [companyId], references: [id])
+  orderId      String   @unique
+  order        Order    @relation(fields: [orderId], references: [id])
+  combinedById String
+  combinedBy   User     @relation("TableGroupCreatedBy", fields: [combinedById], references: [id])
+  reason       String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  members TableGroupMember[]
+
+  @@index([companyId, isActive])
+  @@index([companyId, orderId])
+}
+
+model TableGroupMember {
+  id           String      @id @default(uuid())
+  tableGroupId String
+  tableGroup   TableGroup  @relation(fields: [tableGroupId], references: [id])
+  tableId      String
+  table        DiningTable @relation(fields: [tableId], references: [id])
+  joinedAt     DateTime    @default(now())
+  releasedAt   DateTime?
+
+  @@index([tableGroupId])
+  @@index([tableId])
+}
+
+// ─── Menu Catalogue ───────────────────────────────────────────────────────────
+
+model Category {
+  id                String          @id @default(uuid())
+  companyId         String          @default("AUTO_INJECTED")
+  company           Company         @relation(fields: [companyId], references: [id])
+  name              String
+  sortOrder         Int             @default(0)
+  kitchenStationId  String?
+  targetPrepMinutes Int?
+  isAvailable       Boolean         @default(true)
+  isDeleted         Boolean         @default(false)
+  subcategories     Subcategory[]
+  menuItems         MenuItem[]
+  inventoryItems    InventoryItem[]
+  kitchenStation    KitchenStation? @relation(fields: [kitchenStationId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([companyId, name])
+  @@index([companyId, isAvailable, isDeleted])
+}
+
+model Subcategory {
+  id               String          @id @default(uuid())
+  companyId        String          @default("AUTO_INJECTED")
+  company          Company         @relation(fields: [companyId], references: [id])
+  categoryId       String
+  category         Category        @relation(fields: [categoryId], references: [id])
+  name             String
+  sortOrder        Int             @default(0)
+  isAvailable      Boolean         @default(true)
+  isDeleted        Boolean         @default(false)
+  menuItems        MenuItem[]
+  kitchenStationId String?
+  kitchenStation   KitchenStation? @relation(fields: [kitchenStationId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@unique([companyId, categoryId, name])
+  @@index([companyId, categoryId, isDeleted])
+}
+
+model MenuItem {
+  id                    String                 @id @default(uuid())
+  companyId             String                 @default("AUTO_INJECTED")
+  company               Company                @relation(fields: [companyId], references: [id])
+  name                  String
+  description           String?
+  type                  MenuItemType           @default(FOOD)
+  categoryId            String
+  subcategoryId         String?
+  category              Category               @relation(fields: [categoryId], references: [id])
+  subcategory           Subcategory?           @relation(fields: [subcategoryId], references: [id])
+  basePrice             Decimal                @db.Decimal(12, 4)
+  baseCost              Decimal?               @db.Decimal(12, 4)
+  // SKU unique per company (NULLs are excluded from unique enforcement in PG)
+  sku                   String?
+  kitchenStationId      String?
+  targetPrepMinutes     Int?
+  trackStock            Boolean                @default(true)
+  isAvailable           Boolean                @default(true)
+  isDeleted             Boolean                @default(false)
+  variants              MenuVariant[]
+  addons                MenuAddon[]
+  dailyStocks           DailyStock[]
+  inventoryTransactions InventoryTransaction[]
+  orderItems            OrderItem[]
+  kitchenStation        KitchenStation?        @relation(fields: [kitchenStationId], references: [id])
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@unique([companyId, sku])
+  @@index([companyId, categoryId, subcategoryId])
+  @@index([companyId, isAvailable, isDeleted])
+}
+
+model MenuVariant {
+  id                    String                 @id @default(uuid())
+  companyId             String                 @default("AUTO_INJECTED")
+  company               Company                @relation(fields: [companyId], references: [id])
+  menuItemId            String
+  menuItem              MenuItem               @relation(fields: [menuItemId], references: [id])
+  name                  String
+  price                 Decimal                @db.Decimal(12, 4)
+  cost                  Decimal?               @db.Decimal(12, 4)
+  sku                   String?
+  trackStock            Boolean                @default(true)
+  isAvailable           Boolean                @default(true)
+  isDeleted             Boolean                @default(false)
+  dailyStocks           DailyStock[]
+  inventoryTransactions InventoryTransaction[]
+  orderItems            OrderItem[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@unique([companyId, sku])
+  @@unique([menuItemId, name])
+  @@index([companyId, menuItemId, isDeleted])
+}
+
+model MenuAddon {
+  id             String           @id @default(uuid())
+  companyId      String           @default("AUTO_INJECTED")
+  company        Company          @relation(fields: [companyId], references: [id])
+  menuItemId     String?
+  menuItem       MenuItem?        @relation(fields: [menuItemId], references: [id])
+  name           String
+  price          Decimal          @db.Decimal(12, 4)
+  isAvailable    Boolean          @default(true)
+  isDeleted      Boolean          @default(false)
+  orderItemLinks OrderItemAddon[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([companyId, menuItemId, isAvailable, isDeleted])
+}
+
+// ─── Stock ────────────────────────────────────────────────────────────────────
+
+model DailyStock {
+  id           String       @id @default(uuid())
+  companyId    String       @default("AUTO_INJECTED")
+  company      Company      @relation(fields: [companyId], references: [id])
+  businessDate DateTime
+  menuItemId   String
+  variantId    String?
+  menuItem     MenuItem     @relation(fields: [menuItemId], references: [id])
+  variant      MenuVariant? @relation(fields: [variantId], references: [id])
+  openingQty   Int
+  remainingQty Int
+  lowStockAt   Int          @default(0)
+  status       StockStatus  @default(IN_STOCK)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([companyId, businessDate, menuItemId, variantId])
+  @@index([companyId, businessDate, status])
+  @@index([companyId, menuItemId, variantId])
+}
+
+model InventoryTransaction {
+  id          String       @id @default(uuid())
+  companyId   String       @default("AUTO_INJECTED")
+  company     Company      @relation(fields: [companyId], references: [id])
+  menuItemId  String
+  menuItem    MenuItem     @relation(fields: [menuItemId], references: [id])
+  variantId   String?
+  variant     MenuVariant? @relation(fields: [variantId], references: [id])
+  type        String // 'PURCHASE', 'WASTAGE', 'MANUAL_ADJUSTMENT'
+  quantity    Int
+  unitCost    Decimal?     @db.Decimal(12, 4)
+  notes       String?
+  createdAt   DateTime     @default(now())
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id])
+
+  @@index([companyId, type, createdAt])
+  @@index([companyId, menuItemId, variantId])
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id                  String       @id @default(uuid())
+  companyId           String       @default("AUTO_INJECTED")
+  company             Company      @relation(fields: [companyId], references: [id])
+  // Sequence is per-company; globally unique removed
+  orderNumber         String
+  channel             OrderChannel @default(DINE_IN)
+  tableId             String?
+  table               DiningTable? @relation("OrderTable", fields: [tableId], references: [id])
+  activeForTable      DiningTable? @relation("ActiveTableOrder")
+  customerId          String?
+  customerName        String?
+  customer            Customer?    @relation(fields: [customerId], references: [id])
+  createdById         String
+  createdBy           User         @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  status              OrderStatus  @default(CONFIRMED)
+  guestCount          Int?
+  specialInstructions String?
+  subtotal            Decimal      @default(0) @db.Decimal(12, 4)
+  discountAmount      Decimal      @default(0) @db.Decimal(12, 4)
+  discountPercentage  Decimal      @default(0) @db.Decimal(12, 4)
+  grandTotal          Decimal      @default(0) @db.Decimal(12, 4)
+  confirmedAt         DateTime?
+  cancelledAt         DateTime?
+  voidedAt            DateTime?
+  completedAt         DateTime?
+  items               OrderItem[]
+  kotTickets          KotTicket[]
+  bill                Bill?
+  tableGroup          TableGroup?
+  splitSourceOrders   TableSplit[] @relation("SplitSourceOrder")
+  splitNewOrder       TableSplit?  @relation("SplitNewOrder")
+  mergedIntoOrderId   String?
+  mergedIntoOrder     Order?       @relation("OrderMergedInto", fields: [mergedIntoOrderId], references: [id])
+  mergedFromOrders    Order[]      @relation("OrderMergedInto")
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@unique([companyId, orderNumber])
+  @@index([companyId, status, createdAt])
+  @@index([companyId, tableId, status])
+  @@index([companyId, createdById, createdAt])
+  @@index([companyId, customerId, createdAt])
+  @@index([companyId, channel, createdAt])
+}
+
+model OrderItem {
+  id                  String           @id @default(uuid())
+  orderId             String
+  order               Order            @relation(fields: [orderId], references: [id])
+  menuItemId          String
+  menuItem            MenuItem         @relation(fields: [menuItemId], references: [id])
+  variantId           String?
+  variant             MenuVariant?     @relation(fields: [variantId], references: [id])
+  quantity            Int
+  unitPrice           Decimal          @db.Decimal(12, 4)
+  unitCost            Decimal?         @db.Decimal(12, 4)
+  addonTotal          Decimal          @default(0) @db.Decimal(12, 4)
+  lineSubtotal        Decimal          @db.Decimal(12, 4)
+  specialInstructions String?
+  courseName          String?
+  fireAt              DateTime?
+  status              OrderItemStatus  @default(PENDING)
+  addons              OrderItemAddon[]
+  kotItems            KotItem[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([orderId])
+  @@index([menuItemId, variantId])
+}
+
+model OrderItemAddon {
+  id          String    @id @default(uuid())
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+  addonId     String
+  addon       MenuAddon @relation(fields: [addonId], references: [id])
+  quantity    Int       @default(1)
+  unitPrice   Decimal   @db.Decimal(12, 4)
+  total       Decimal   @db.Decimal(12, 4)
+  createdAt   DateTime  @default(now())
+
+  @@index([orderItemId])
+}
+
+// ─── Kitchen ──────────────────────────────────────────────────────────────────
+
+model KotTicket {
+  id            String          @id @default(uuid())
+  companyId     String          @default("AUTO_INJECTED")
+  company       Company         @relation(fields: [companyId], references: [id])
+  // Sequence is per-company; globally unique removed
+  kotNumber     String
+  orderId       String
+  order         Order           @relation(fields: [orderId], references: [id])
+  status        KotStatus       @default(PENDING)
+  stationName   String?
+  stationId     String?
+  isAddon       Boolean         @default(false)
+  firedAt       DateTime        @default(now())
+  targetReadyAt DateTime?
+  items         KotItem[]
+  station       KitchenStation? @relation(fields: [stationId], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([companyId, kotNumber])
+  @@index([companyId, status, createdAt])
+  @@index([companyId, stationId, status, createdAt])
+  @@index([companyId, orderId])
+}
+
+model KotItem {
+  id                  String          @id @default(uuid())
+  kotTicketId         String
+  kotTicket           KotTicket       @relation(fields: [kotTicketId], references: [id])
+  orderItemId         String
+  orderItem           OrderItem       @relation(fields: [orderItemId], references: [id])
+  quantity            Int
+  status              KotStatus       @default(PENDING)
+  itemName            String?
+  variantName         String?
+  courseName          String?
+  specialInstructions String?
+  modifiers           Json?
+  stationId           String?
+  targetPrepMinutes   Int?
+  targetReadyAt       DateTime?
+  station             KitchenStation? @relation(fields: [stationId], references: [id])
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([kotTicketId])
+  @@index([orderItemId])
+  @@index([stationId, status])
+}
+
+// ─── Billing & Payments ───────────────────────────────────────────────────────
+
+model Bill {
+  id                    String      @id @default(uuid())
+  companyId             String      @default("AUTO_INJECTED")
+  company               Company     @relation(fields: [companyId], references: [id])
+  // Sequence is per-company; globally unique removed
+  billNumber            String
+  orderId               String      @unique
+  order                 Order       @relation(fields: [orderId], references: [id])
+  subtotal              Decimal     @db.Decimal(12, 4)
+  discountAmount        Decimal     @default(0) @db.Decimal(12, 4)
+  discountPercentage    Decimal     @default(0) @db.Decimal(12, 4)
+  grandTotal            Decimal     @db.Decimal(12, 4)
+  paid                  Decimal     @default(0) @db.Decimal(12, 4)
+  refunded              Decimal     @default(0) @db.Decimal(12, 4)
+  due                   Decimal     @db.Decimal(12, 4)
+  // How many times this bill has been (re)generated for its order. Starts at 1
+  // on first generation and increments on each regenerate while still unpaid.
+  generationCount       Int         @default(1)
+  status                BillStatus  @default(OPEN)
+  // Fiscal snapshot — frozen at bill creation so receipts re-print stably
+  // even if the tenant later changes their business profile. VAT and service
+  // charge are baked into menu prices, so only identity fields are captured.
+  taxJurisdiction       String?
+  taxRegistrationNumber String?
+  businessName          String?
+  businessAddress       String?
+  invoiceFooter         String?
+  currency              String?
+  splits                BillSplit[]
+  payments              Payment[]
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@unique([companyId, billNumber])
+  @@index([companyId, status, createdAt])
+}
+
+model BillSplit {
+  id        String   @id @default(uuid())
+  billId    String
+  bill      Bill     @relation(fields: [billId], references: [id])
+  label     String
+  amount    Decimal  @db.Decimal(12, 4)
+  createdAt DateTime @default(now())
+
+  payments Payment[]
+
+  @@index([billId])
+}
+
+model Payment {
+  id           String        @id @default(uuid())
+  companyId    String        @default("AUTO_INJECTED")
+  company      Company       @relation(fields: [companyId], references: [id])
+  billId       String
+  bill         Bill          @relation(fields: [billId], references: [id])
+  receivedById String
+  receivedBy   User          @relation(fields: [receivedById], references: [id])
+  billSplitId  String?
+  billSplit    BillSplit?    @relation(fields: [billSplitId], references: [id])
+  shiftId      String?
+  shift        Shift?        @relation(fields: [shiftId], references: [id])
+  method       PaymentMethod
+  status       PaymentStatus @default(COMPLETED)
+  amount       Decimal       @db.Decimal(12, 4)
+  reference    String?
+  note         String?
+  refunds      Refund[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([companyId, billId, status])
+  @@index([companyId, method, createdAt])
+  @@index([companyId, receivedById, createdAt])
+  @@index([companyId, shiftId, status])
+}
+
+// ─── Audit ────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  companyId String      @default("AUTO_INJECTED")
+  company   Company     @relation(fields: [companyId], references: [id])
+  actorId   String?
+  actor     User?       @relation(fields: [actorId], references: [id])
+  action    AuditAction
+  entity    String
+  entityId  String
+  before    Json?
+  after     Json?
+  reason    String?
+  createdAt DateTime    @default(now())
+
+  @@index([companyId, action, createdAt])
+  @@index([companyId, entity, entityId])
+  @@index([companyId, actorId, createdAt])
+}
+
+// ─── Customers ────────────────────────────────────────────────────────────────
+
+model Customer {
+  id        String   @id @default(uuid())
+  companyId String   @default("AUTO_INJECTED")
+  company   Company  @relation(fields: [companyId], references: [id])
+  name      String
+  phone     String
+  email     String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  isDeleted Boolean  @default(false)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, phone])
+  @@index([companyId, isDeleted])
+  @@index([companyId, name])
+}
+
+// ─── Refunds ──────────────────────────────────────────────────────────────────
+
+model Refund {
+  id            String        @id @default(uuid())
+  companyId     String        @default("AUTO_INJECTED")
+  company       Company       @relation(fields: [companyId], references: [id])
+  paymentId     String
+  payment       Payment       @relation(fields: [paymentId], references: [id])
+  processedById String
+  processedBy   User          @relation(fields: [processedById], references: [id])
+  shiftId       String?
+  shift         Shift?        @relation(fields: [shiftId], references: [id])
+  method        PaymentMethod
+  amount        Decimal       @db.Decimal(12, 4)
+  reason        String
+  status        RefundStatus  @default(COMPLETED)
+  reference     String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([companyId, paymentId, status])
+  @@index([companyId, createdAt])
+  @@index([companyId, processedById, createdAt])
+  @@index([companyId, shiftId, status])
+}
+
+// ─── Sequences ────────────────────────────────────────────────────────────────
+// Per-company monotonic counters used for orderNumber, kotNumber, billNumber.
+// Mutated via atomic INSERT … ON CONFLICT DO UPDATE in sequenceRepository.
+
+model NumberSequence {
+  id        String       @id @default(uuid())
+  companyId String
+  kind      SequenceKind
+  lastValue Int          @default(0)
+  updatedAt DateTime     @updatedAt
+
+  @@unique([companyId, kind])
+}
+
+// ─── Idempotency ──────────────────────────────────────────────────────────────
+// Captured response is replayed when a client retries with the same
+// Idempotency-Key header on the same route. responseStatus is NULL while
+// the original request is still in flight.
+
+model IdempotencyKey {
+  id             String   @id @default(uuid())
+  companyId      String
+  key            String
+  route          String
+  userId         String?
+  responseStatus Int?
+  responseBody   String?
+  contentType    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, key, route])
+  @@index([createdAt])
+}
+
+// ─── Shifts & Cash Drawer ─────────────────────────────────────────────────────
+// A Shift bookends a cashier's session at a terminal. Payments and refunds
+// taken while the shift is OPEN are linked via shiftId; at close, totals are
+// snapshot onto the shift row so the Z-report remains stable even if later
+// edits change the underlying rows.
+
+model Shift {
+  id            String            @id @default(uuid())
+  companyId     String            @default("AUTO_INJECTED")
+  company       Company           @relation(fields: [companyId], references: [id])
+  shiftNumber   String
+  openedById    String
+  openedBy      User              @relation("ShiftOpenedBy", fields: [openedById], references: [id])
+  closedById    String?
+  closedBy      User?             @relation("ShiftClosedBy", fields: [closedById], references: [id])
+  status        ShiftStatus       @default(OPEN)
+  openingCash   Decimal           @default(0) @db.Decimal(12, 4)
+  closingCash   Decimal?          @db.Decimal(12, 4)
+  expectedCash  Decimal?          @db.Decimal(12, 4)
+  variance      Decimal?          @db.Decimal(12, 4)
+  cashSales     Decimal?          @db.Decimal(12, 4)
+  qrSales       Decimal?          @db.Decimal(12, 4)
+  cardSales     Decimal?          @db.Decimal(12, 4)
+  mixedSales    Decimal?          @db.Decimal(12, 4)
+  totalSales    Decimal?          @db.Decimal(12, 4)
+  cashRefunds   Decimal?          @db.Decimal(12, 4)
+  qrRefunds     Decimal?          @db.Decimal(12, 4)
+  cardRefunds   Decimal?          @db.Decimal(12, 4)
+  mixedRefunds  Decimal?          @db.Decimal(12, 4)
+  totalRefunds  Decimal?          @db.Decimal(12, 4)
+  payIns        Decimal?          @db.Decimal(12, 4)
+  payOuts       Decimal?          @db.Decimal(12, 4)
+  paymentsCount Int?
+  refundsCount  Int?
+  billsCount    Int?
+  openedAt      DateTime          @default(now())
+  closedAt      DateTime?
+  openingNote   String?
+  closingNote   String?
+  payments      Payment[]
+  refunds       Refund[]
+  cashEvents    CashDrawerEvent[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([companyId, shiftNumber])
+  @@index([companyId, status, openedAt])
+  @@index([companyId, openedById, status])
+}
+
+// ─── Fiscal / Business Profile ────────────────────────────────────────────────
+// Per-tenant business identity fields printed on receipts. VAT and service
+// charge are included in menu prices, so no tax rates live here. The tenant
+// edits this through /api/tax-config and the values are snapshot onto each Bill
+// at creation time.
+
+model TaxConfig {
+  id                    String   @id @default(uuid())
+  companyId             String   @unique
+  company               Company  @relation(fields: [companyId], references: [id])
+  taxJurisdiction       String   @default("NP")
+  taxRegistrationNumber String?
+  businessName          String?
+  businessAddress       String?
+  invoiceFooter         String?
+  currency              String   @default("NPR")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model CashDrawerEvent {
+  id        String              @id @default(uuid())
+  companyId String              @default("AUTO_INJECTED")
+  company   Company             @relation(fields: [companyId], references: [id])
+  shiftId   String
+  shift     Shift               @relation(fields: [shiftId], references: [id])
+  actorId   String
+  actor     User                @relation(fields: [actorId], references: [id])
+  type      CashDrawerEventType
+  amount    Decimal             @db.Decimal(12, 4)
+  reason    String
+  reference String?
+  createdAt DateTime            @default(now())
+
+  @@index([companyId, shiftId, createdAt])
+  @@index([companyId, actorId, createdAt])
+}
+
+// ─── Table Split ──────────────────────────────────────────────────────────────
+
+model TableSplit {
+  id        String  @id @default(uuid())
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  sourceOrderId String
+  sourceOrder   Order  @relation("SplitSourceOrder", fields: [sourceOrderId], references: [id])
+
+  newOrderId String @unique
+  newOrder   Order  @relation("SplitNewOrder", fields: [newOrderId], references: [id])
+
+  fromTableId String
+  fromTable   DiningTable @relation("SplitFromTable", fields: [fromTableId], references: [id])
+
+  toTableId String
+  toTable   DiningTable @relation("SplitToTable", fields: [toTableId], references: [id])
+
+  splitById String
+  splitBy   User   @relation(fields: [splitById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId, sourceOrderId])
+  @@index([companyId, fromTableId, toTableId])
+}
+
+model InventoryUnit {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  name   String
+  symbol String?
+  type   InventoryUnitType
+
+  isBaseUnit Boolean @default(false)
+  isActive   Boolean @default(true)
+  isDeleted  Boolean @default(false)
+
+  createdById String?
+  createdBy   User?   @relation("InventoryUnitCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  baseItems InventoryItem[] @relation("InventoryItemBaseUnit")
+
+  purchaseItems   InventoryPurchaseItem[]
+  stockOutItems   StockOutItem[]
+  adjustmentItems InventoryAdjustmentItem[]
+
+  fromConversions InventoryUnitConversion[] @relation("FromInventoryUnitConversion")
+  toConversions   InventoryUnitConversion[] @relation("ToInventoryUnitConversion")
+
+  @@unique([companyId, symbol])
+  @@index([companyId, type])
+  @@index([companyId, isActive, isDeleted])
+}
+
+model InventoryUnitConversion {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  fromUnitId String
+  fromUnit   InventoryUnit @relation("FromInventoryUnitConversion", fields: [fromUnitId], references: [id])
+
+  toUnitId String
+  toUnit   InventoryUnit @relation("ToInventoryUnitConversion", fields: [toUnitId], references: [id])
+
+  factor Decimal @db.Decimal(18, 6)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, fromUnitId, toUnitId])
+  @@index([companyId, fromUnitId])
+  @@index([companyId, toUnitId])
+}
+
+model InventoryItem {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  name String
+  code String
+
+  type InventoryItemType @default(RAW_MATERIAL)
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  baseUnitId String
+  baseUnit   InventoryUnit @relation("InventoryItemBaseUnit", fields: [baseUnitId], references: [id])
+
+  reorderLevel Decimal @default(0) @db.Decimal(12, 3)
+
+  trackExpiry Boolean @default(false)
+
+  costingMethod InventoryCostingMethod @default(FEFO)
+
+  defaultPurchasePrice Decimal @default(0) @db.Decimal(12, 4)
+
+  isActive  Boolean @default(true)
+  isDeleted Boolean @default(false)
+
+  createdById String?
+  createdBy   User?   @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockBalance StockBalance?
+  batches      StockBatch[]
+  movements    StockMovement[]
+
+  purchaseItems   InventoryPurchaseItem[]
+  stockOutItems   StockOutItem[]
+  adjustmentItems InventoryAdjustmentItem[]
+
+  @@unique([companyId, code])
+  @@index([companyId, name])
+  @@index([companyId, categoryId])
+  @@index([companyId, isActive, isDeleted])
+}
+
+model InventorySupplier {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  name String
+
+  phone   String
+  email   String?
+  address String?
+
+  panNumber String?
+  vatNumber String?
+
+  contactPerson String?
+
+  isActive  Boolean @default(true)
+  isDeleted Boolean @default(false)
+
+  createdById String?
+  createdBy   User?   @relation("InventorySupplierCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases InventoryPurchase[]
+
+  @@index([companyId, name])
+  @@index([companyId, phone])
+  @@index([companyId, panNumber])
+  @@index([companyId, isActive, isDeleted])
+}
+
+model InventoryPurchase {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  purchaseNumber String
+
+  supplierId String?
+  supplier   InventorySupplier? @relation(fields: [supplierId], references: [id])
+
+  status InventoryPurchaseStatus @default(DRAFT)
+
+  purchaseDate DateTime @default(now())
+
+  supplierInvoiceNumber String?
+  invoiceFileUrl        String?
+
+  fiscalYear String?
+
+  subtotal           Decimal @default(0) @db.Decimal(12, 4)
+  discountAmount     Decimal @default(0) @db.Decimal(12, 4)
+  discountPercentage Decimal @default(0) @db.Decimal(12, 4)
+  vatRate            Decimal @default(13.00) @db.Decimal(5, 2)
+  vatAmount          Decimal @default(0) @db.Decimal(12, 4)
+  grandTotal         Decimal @default(0) @db.Decimal(12, 4)
+
+  note String?
+
+  createdById String?
+  createdBy   User?   @relation("InventoryPurchaseCreatedBy", fields: [createdById], references: [id])
+
+  postedById String?
+  postedBy   User?     @relation("InventoryPurchasePostedBy", fields: [postedById], references: [id])
+  postedAt   DateTime?
+
+  cancelledById String?
+  cancelledBy   User?     @relation("InventoryPurchaseCancelledBy", fields: [cancelledById], references: [id])
+  cancelledAt   DateTime?
+  cancelReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items InventoryPurchaseItem[]
+
+  @@unique([companyId, purchaseNumber])
+  @@index([companyId, supplierId])
+  @@index([companyId, status, purchaseDate])
+  @@index([companyId, fiscalYear])
+  @@index([companyId, cancelledById])
+}
+
+model InventoryPurchaseItem {
+  id String @id @default(uuid())
+
+  purchaseId String
+  purchase   InventoryPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+
+  unitId String
+  unit   InventoryUnit @relation(fields: [unitId], references: [id])
+
+  quantity     Decimal @db.Decimal(12, 3)
+  baseQuantity Decimal @db.Decimal(12, 3)
+
+  unitCost Decimal @db.Decimal(12, 4)
+  total    Decimal @db.Decimal(12, 4)
+
+  batchNumber String?
+
+  manufacturedDate DateTime?
+  expiryDate       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  batches   StockBatch[]
+  movements StockMovement[]
+
+  @@index([purchaseId])
+  @@index([itemId])
+  @@index([unitId])
+}
+
+model StockBatch {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  itemId String
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+
+  batchNumber String?
+
+  purchaseItemId String?
+  purchaseItem   InventoryPurchaseItem? @relation(fields: [purchaseItemId], references: [id])
+
+  receivedQty  Decimal @db.Decimal(12, 3)
+  remainingQty Decimal @db.Decimal(12, 3)
+
+  unitCost  Decimal @db.Decimal(12, 4)
+  totalCost Decimal @db.Decimal(12, 4)
+
+  manufacturedDate DateTime?
+  expiryDate       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movements StockMovement[]
+
+  @@index([companyId, itemId])
+  @@index([companyId, expiryDate])
+  @@index([companyId, remainingQty])
+  @@index([purchaseItemId])
+}
+
+model StockBalance {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  itemId String        @unique
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+
+  quantityOnHand Decimal @default(0) @db.Decimal(12, 3)
+
+  averageCost Decimal @default(0) @db.Decimal(12, 4)
+  totalValue  Decimal @default(0) @db.Decimal(12, 4)
+
+  lastMovementAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, itemId])
+  @@index([companyId])
+}
+
+model StockOut {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  stockOutNumber String
+
+  status StockOutStatus @default(DRAFT)
+
+  stockOutDate DateTime @default(now())
+
+  reason       StockOutReason
+  customReason String?
+
+  issuedTo   String?
+  receivedBy String?
+
+  note String?
+
+  createdById String?
+  createdBy   User?   @relation("StockOutCreatedBy", fields: [createdById], references: [id])
+
+  postedById String?
+  postedBy   User?     @relation("StockOutPostedBy", fields: [postedById], references: [id])
+  postedAt   DateTime?
+
+  cancelledById String?
+  cancelledBy   User?     @relation("StockOutCancelledBy", fields: [cancelledById], references: [id])
+  cancelledAt   DateTime?
+  cancelReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items StockOutItem[]
+
+  @@unique([companyId, stockOutNumber])
+  @@index([companyId, status, stockOutDate])
+  @@index([companyId, reason, stockOutDate])
+  @@index([companyId, cancelledById])
+}
+
+model StockOutItem {
+  id String @id @default(uuid())
+
+  stockOutId String
+  stockOut   StockOut @relation(fields: [stockOutId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+
+  unitId String
+  unit   InventoryUnit @relation(fields: [unitId], references: [id])
+
+  quantity     Decimal @db.Decimal(12, 3)
+  baseQuantity Decimal @db.Decimal(12, 3)
+
+  estimatedUnitCost  Decimal? @db.Decimal(12, 4)
+  estimatedTotalCost Decimal? @db.Decimal(12, 4)
+
+  actualUnitCost  Decimal? @db.Decimal(12, 4)
+  actualTotalCost Decimal? @db.Decimal(12, 4)
+
+  note String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movements StockMovement[]
+
+  @@index([stockOutId])
+  @@index([itemId])
+  @@index([unitId])
+}
+
+model InventoryAdjustment {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  adjustmentNumber String
+
+  status InventoryAdjustmentStatus @default(DRAFT)
+
+  adjustmentDate DateTime @default(now())
+
+  reason String
+  note   String?
+
+  createdById String?
+  createdBy   User?   @relation("InventoryAdjustmentCreatedBy", fields: [createdById], references: [id])
+
+  postedById String?
+  postedBy   User?     @relation("InventoryAdjustmentPostedBy", fields: [postedById], references: [id])
+  postedAt   DateTime?
+
+  cancelledById String?
+  cancelledBy   User?     @relation("InventoryAdjustmentCancelledBy", fields: [cancelledById], references: [id])
+  cancelledAt   DateTime?
+  cancelReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items InventoryAdjustmentItem[]
+
+  @@unique([companyId, adjustmentNumber])
+  @@index([companyId, status, adjustmentDate])
+  @@index([companyId, cancelledById])
+}
+
+model InventoryAdjustmentItem {
+  id String @id @default(uuid())
+
+  adjustmentId String
+  adjustment   InventoryAdjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+
+  unitId String
+  unit   InventoryUnit @relation(fields: [unitId], references: [id])
+
+  systemQuantity     Decimal @db.Decimal(12, 3)
+  actualQuantity     Decimal @db.Decimal(12, 3)
+  differenceQuantity Decimal @db.Decimal(12, 3)
+
+  baseSystemQuantity     Decimal @db.Decimal(12, 3)
+  baseActualQuantity     Decimal @db.Decimal(12, 3)
+  baseDifferenceQuantity Decimal @db.Decimal(12, 3)
+
+  unitCost  Decimal? @db.Decimal(12, 4)
+  totalCost Decimal? @db.Decimal(12, 4)
+
+  note String?
+
+  movements StockMovement[]
+
+  @@index([adjustmentId])
+  @@index([itemId])
+  @@index([unitId])
+}
+
+model StockMovement {
+  id String @id @default(uuid())
+
+  companyId String  @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  itemId String
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+
+  batchId String?
+  batch   StockBatch? @relation(fields: [batchId], references: [id])
+
+  type      StockMovementType
+  direction StockMovementDirection
+
+  stockOutReason StockOutReason?
+
+  quantity Decimal @db.Decimal(12, 3)
+
+  previousQuantity Decimal @db.Decimal(12, 3)
+  newQuantity      Decimal @db.Decimal(12, 3)
+
+  unitCost  Decimal? @db.Decimal(12, 4)
+  totalCost Decimal? @db.Decimal(12, 4)
+
+  referenceType StockReferenceType?
+  referenceId   String?
+
+  purchaseItemId String?
+  purchaseItem   InventoryPurchaseItem? @relation(fields: [purchaseItemId], references: [id])
+
+  stockOutItemId String?
+  stockOutItem   StockOutItem? @relation(fields: [stockOutItemId], references: [id])
+
+  adjustmentItemId String?
+  adjustmentItem   InventoryAdjustmentItem? @relation(fields: [adjustmentItemId], references: [id])
+
+  note String?
+
+  createdById String?
+  createdBy   User?   @relation("StockMovementCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId, itemId, createdAt])
+  @@index([companyId, type, createdAt])
+  @@index([companyId, direction, createdAt])
+  @@index([companyId, stockOutReason, createdAt])
+  @@index([companyId, referenceType, referenceId])
+  @@index([companyId, batchId])
+}
+
+model InventorySetting {
+  id String @id @default(uuid())
+
+  companyId String  @unique @default("AUTO_INJECTED")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  allowNegativeStock Boolean @default(false)
+
+  defaultCostingMethod InventoryCostingMethod @default(FEFO)
+
+  defaultVatRate Decimal @default(13.00) @db.Decimal(5, 2)
+
+  lowStockAlertEnabled Boolean @default(true)
+  expiryAlertEnabled   Boolean @default(true)
+  expiryAlertDays      Int     @default(7)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model KitchenStation {
+  id          String   @id @default(uuid())
+  companyId   String
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+
+  company       Company       @relation(fields: [companyId], references: [id])
+  assignedStaff User[]        @relation("StationStaff")
+  categories    Category[]
+  subcategories Subcategory[]
+  menuItems     MenuItem[]
+  kotTickets    KotTicket[]
+  kotItems      KotItem[]
+  printers      Printer[]
+
+  @@unique([companyId, name])
+  @@index([companyId, isActive])
+}
+
+model Printer {
+  id               String   @id @default(uuid())
+  companyId        String
+  name             String
+  ipAddress        String
+  port             Int      @default(9100)
+  isKitchen        Boolean  @default(false)
+  isCashier        Boolean  @default(false)
+  isBar            Boolean  @default(false)
+  isReport         Boolean  @default(false)
+  isEnabled        Boolean  @default(true)
+  kitchenStationId String?
+  assignedUserId   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  company        Company         @relation(fields: [companyId], references: [id])
+  kitchenStation KitchenStation? @relation(fields: [kitchenStationId], references: [id])
+  assignedUser   User?           @relation("PrinterUser", fields: [assignedUserId], references: [id])
+
+  @@unique([companyId, name])
+  @@index([companyId, isEnabled])
+}

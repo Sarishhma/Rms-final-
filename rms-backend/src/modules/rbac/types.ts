@@ -1,0 +1,38 @@
+import type { UserRole } from "@prisma/client";
+
+export type Permission =
+  | "table:read"
+  | "table:write"
+  | "menu:read"
+  | "menu:write"
+  | "stock:read"
+  | "stock:write"
+  | "order:read"
+  | "order:write"
+  | "order:void"
+  | "kot:read"
+  | "kot:write"
+  | "bill:read"
+  | "bill:write"
+  | "payment:read"
+  | "payment:write"
+  | "refund:read"
+  | "refund:write"
+  | "customer:read"
+  | "customer:write"
+  | "shift:read"
+  | "shift:write"
+  | "tax:read"
+  | "tax:write"
+  | "report:read"
+  | "report:financial:read"
+  | "audit:read"
+  | "user:manage"
+  | "inventory:read"
+  | "inventory:write"
+  | "kitchen-station:read"
+  | "kitchen-station:write"
+  | "printer:read"
+  | "printer:write";
+
+export type RolePermissionMap = Record<UserRole, readonly Permission[]>;

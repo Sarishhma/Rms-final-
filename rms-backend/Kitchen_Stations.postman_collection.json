@@ -1,0 +1,530 @@
+{
+  "info": {
+    "name": "Kitchen Stations Module",
+    "description": "Postman testing data for the RMS backend Kitchen Station module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List Kitchen Stations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations?page=1&limit=10",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "isActive",
+              "value": "true",
+              "disabled": true
+            },
+            {
+              "key": "search",
+              "value": "grill",
+              "disabled": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Routing Information",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations/routing",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations",
+            "routing"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Specific Kitchen Station",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations/{{kitchen_station_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations",
+            "{{kitchen_station_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Kitchen Station",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Grill Station\",\n  \"description\": \"Hot line — grilled items\",\n  \"sortOrder\": 1,\n  \"isDefault\": false,\n  \"staffIds\": []\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Kitchen Station",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated Grill Station\",\n  \"isActive\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations/{{kitchen_station_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations",
+            "{{kitchen_station_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Set Default Kitchen Station",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations/{{kitchen_station_id}}/default",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations",
+            "{{kitchen_station_id}}",
+            "default"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Assignments",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations/{{kitchen_station_id}}/assignments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations",
+            "{{kitchen_station_id}}",
+            "assignments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Assign Routes",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryIds\": [\n    \"uuid-for-category-1\",\n    \"uuid-for-category-2\"\n  ],\n  \"subcategoryIds\": [],\n  \"menuItemIds\": [\n    \"uuid-for-menu-item-1\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations/{{kitchen_station_id}}/assignments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations",
+            "{{kitchen_station_id}}",
+            "assignments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Kitchen Station",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/kitchen-stations/{{kitchen_station_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "kitchen-stations",
+            "{{kitchen_station_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Printers",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/printers",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "printers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Printer",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/printers/{{printer_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "printers",
+            "{{printer_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Kitchen Printer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Grill Printer\",\n  \"ipAddress\": \"192.168.1.100\",\n  \"port\": 9100,\n  \"isKitchen\": true,\n  \"isEnabled\": true,\n  \"kitchenStationId\": \"{{kitchen_station_id}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/printers",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "printers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Cashier Printer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Front Cashier Printer\",\n  \"ipAddress\": \"192.168.1.50\",\n  \"port\": 9100,\n  \"isKitchen\": false,\n  \"isEnabled\": true,\n  \"assignedUserId\": \"{{cashier_user_id}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/printers",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "printers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Printer",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"isEnabled\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/printers/{{printer_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "printers",
+            "{{printer_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Printer",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "x-company-id",
+            "value": "{{company_id}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/printers/{{printer_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "printers",
+            "{{printer_id}}"
+          ]
+        }
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "company_id",
+      "value": "your_company_id_here",
+      "type": "string"
+    },
+    {
+      "key": "kitchen_station_id",
+      "value": "uuid-here",
+      "type": "string"
+    },
+    {
+      "key": "printer_id",
+      "value": ""
+    },
+    {
+      "key": "cashier_user_id",
+      "value": ""
+    }
+  ]
+}
